@@ -1,21 +1,22 @@
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
+import PrimaryButton from "../../components/PrimaryButton";
 
 export default function HomeScreen() {
     return (
         <View style={styles.container}>
+            <Text style={styles.logo}>🥗</Text>
             <Text style={styles.title}>RestlFest</Text>
-
             <Text style={styles.subtitle}>
                 Finde Rezepte aus deinen Lebensmitteln.
             </Text>
 
-            <Button
+            <PrimaryButton
                 title="Lebensmittel scannen"
                 onPress={() => router.push("/scan")}
             />
 
-            <Button
+            <PrimaryButton
                 title="Zutaten bearbeiten"
                 onPress={() => router.push("/ingredients")}
             />
@@ -26,17 +27,25 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: "center",
         padding: 24,
-        gap: 20,
+        justifyContent: "center",
+        gap: 18,
+        backgroundColor: "#F7F4EA",
     },
-
+    logo: {
+        fontSize: 64,
+        textAlign: "center",
+    },
     title: {
-        fontSize: 34,
+        fontSize: 36,
         fontWeight: "bold",
+        textAlign: "center",
+        color: "#263A29",
     },
-
     subtitle: {
-        fontSize: 18,
+        fontSize: 17,
+        textAlign: "center",
+        color: "#5E6C5B",
+        marginBottom: 16,
     },
 });
