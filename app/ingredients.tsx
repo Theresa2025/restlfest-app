@@ -1,56 +1,67 @@
-import { useState } from "react";
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { View, Text, TextInput, FlatList, StyleSheet, Pressable } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
-import { router } from "expo-router";
-
-type Ingredient = {
-    id: string;
-    name: string;
-};
 
 export default function IngredientsScreen() {
-    const [ingredientName, setIngredientName] = useState("");
-    const [ingredients, setIngredients] = useState<Ingredient[]>([
-        { id: "1", name: "Tomaten" },
-        { id: "2", name: "Nudeln" },
-        { id: "3", name: "Mozzarella" },
-    ]);
+    const params = useLocalSearchParams();
+    const [ingredientInput, setIngredientInput] = useState("");
+    const [ingredients, setIngredients] = useState<string[]>([]);
 
-    const addIngredient = () => {
-        if (ingredientName.trim().length === 0) return;
+    useEffect(() => {
+        if (
+            typeof params.detected === "string" &&
+            params.detected.length > 0
+        ) {
+            const scannedIngredients = params.detected
+                .split(",")
+                .map((item) => item.trim());
 
-        const newIngredient = {
-            id: Date.now().toString(),
-            name: ingredientName.trim(),
-        };
+            setIngredients(scannedIngredients);
+        }
+    }, [params.detected]);
 
-        setIngredients((currentIngredients) => [
-            newIngredient,
-            ...currentIngredients,
-        ]);
+    function addIngredient() {
+        const cleanedIngredient = ingredientInput.trim();
 
-        setIngredientName("");
-    };
+        if (cleanedIngredient.length === 0) {
+            return;
+        }
 
-    const deleteIngredient = (id: string) => {
-        setIngredients((currentIngredients) =>
-            currentIngredients.filter((ingredient) => ingredient.id !== id)
+        setIngredients([...ingredients, cleanedIngredient]);
+        setIngredientInput("");
+    }
+
+    function removeIngredient(ingredientToRemove: string) {
+        setIngredients(
+            ingredients.filter(
+                (ingredient) => ingredient !== ingredientToRemove
+            )
         );
-    };
+    }
+
+    function searchRecipes() {
+        router.push({
+            pathname: "/(tabs)/discover",
+            params: {
+                ingredients: ingredients.join(","),
+            },
+        });
+    }
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Zutaten bearbeiten</Text>
             <Text style={styles.subtitle}>
-                Korrigiere erkannte Lebensmittel oder füge neue hinzu.
+                Gib ein, welche Lebensmittel du zuhause hast.
             </Text>
 
             <View style={styles.inputRow}>
                 <TextInput
                     style={styles.input}
-                    placeholder="z. B. Paprika"
-                    value={ingredientName}
-                    onChangeText={setIngredientName}
+                    placeholder="z.B. Tomaten"
+                    value={ingredientInput}
+                    onChangeText={setIngredientInput}
                 />
 
                 <Pressable style={styles.addButton} onPress={addIngredient}>
@@ -60,22 +71,24 @@ export default function IngredientsScreen() {
 
             <FlatList
                 data={ingredients}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item}
                 renderItem={({ item }) => (
                     <View style={styles.ingredientItem}>
-                        <Text style={styles.ingredientText}>{item.name}</Text>
+                        <Text style={styles.ingredientText}>{item}</Text>
 
-                        <Pressable onPress={() => deleteIngredient(item.id)}>
-                            <Text style={styles.deleteText}>Löschen</Text>
+                        <Pressable onPress={() => removeIngredient(item)}>
+                            <Text style={styles.deleteText}>Entfernen</Text>
                         </Pressable>
                     </View>
                 )}
             />
 
-            <PrimaryButton
-                title="Rezepte suchen"
-                onPress={() => router.push("/discover")}
-            />
+            <View style={styles.buttonContainer}>
+                <PrimaryButton
+                    title="Rezepte suchen"
+                    onPress={searchRecipes}
+                />
+            </View>
         </View>
     );
 }
@@ -95,27 +108,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#5E6C5B",
         marginTop: 8,
-        marginBottom: 20,
+        marginBottom: 24,
     },
     inputRow: {
         flexDirection: "row",
         gap: 10,
-        marginBottom: 20,
+        marginBottom: 24,
     },
     input: {
         flex: 1,
         backgroundColor: "#fff",
-        borderRadius: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        borderRadius: 14,
+        padding: 14,
         fontSize: 16,
     },
     addButton: {
-        width: 48,
-        borderRadius: 12,
+        width: 52,
+        height: 52,
+        borderRadius: 14,
         backgroundColor: "#3A7D44",
-        alignItems: "center",
         justifyContent: "center",
+        alignItems: "center",
     },
     addButtonText: {
         color: "#fff",
@@ -124,20 +137,22 @@ const styles = StyleSheet.create({
     },
     ingredientItem: {
         backgroundColor: "#fff",
-        padding: 16,
+        padding: 14,
         borderRadius: 14,
-        marginBottom: 12,
+        marginBottom: 10,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
     ingredientText: {
         fontSize: 16,
-        fontWeight: "600",
         color: "#263A29",
     },
     deleteText: {
-        color: "#B23B3B",
+        color: "#B00020",
         fontWeight: "bold",
+    },
+    buttonContainer: {
+        marginTop: 20,
     },
 });

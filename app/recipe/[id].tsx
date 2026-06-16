@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, StyleSheet, Image, ScrollView, Alert } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+
 import { mockRecipes } from "../../data/mockRecipes";
 import PrimaryButton from "../../components/PrimaryButton";
-import { router } from "expo-router";
+import { addToWishlist } from "../../services/storage";
 
 export default function RecipeDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -39,10 +40,27 @@ export default function RecipeDetailScreen() {
                     </Text>
                 ))}
 
+                <Text style={styles.sectionTitle}>Zubereitung</Text>
+
+                {recipe.instructions.map((step, index) => (
+                    <Text key={index} style={styles.instruction}>
+                        {index + 1}. {step}
+                    </Text>
+                ))}
+
                 <View style={styles.buttonContainer}>
                     <PrimaryButton
                         title="Zur Wunschliste hinzufügen"
-                        onPress={() => router.push("/wishlist")}
+                        onPress={async () => {
+                            await addToWishlist(recipe);
+
+                            Alert.alert(
+                                "Gespeichert",
+                                "Rezept wurde zur Wunschliste hinzugefügt."
+                            );
+
+                            router.push("/(tabs)/wishlist");
+                        }}
                     />
                 </View>
             </View>
@@ -90,6 +108,13 @@ const styles = StyleSheet.create({
         fontSize: 17,
         marginBottom: 10,
         color: "#5E6C5B",
+    },
+
+    instruction: {
+        fontSize: 16,
+        color: "#263A29",
+        marginBottom: 8,
+        lineHeight: 24,
     },
 
     buttonContainer: {

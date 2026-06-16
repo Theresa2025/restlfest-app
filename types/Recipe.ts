@@ -4,4 +4,6 @@ export type Recipe = {
     duration: number;
     ingredients: string[];
     imageUrl: string;
+
+    instructions: string[];
 };
