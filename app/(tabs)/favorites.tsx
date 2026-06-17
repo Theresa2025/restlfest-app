@@ -4,67 +4,53 @@ import { useFocusEffect, router } from "expo-router";
 
 import { Recipe } from "../../types/Recipe";
 import RecipeCard from "../../components/RecipeCard";
-import { getCookedRecipes, removeFromCooked, moveBackToWishlist, } from "../../services/storage";
-import PrimaryButton from "../../components/PrimaryButton";
+import {
+    getFavorites,
+    removeFromFavorites,
+} from "../../services/storage";
 
 export default function FavoritesScreen() {
-    const [cookedRecipes, setCookedRecipes] = useState<Recipe[]>([]);
+    const [favorites, setFavorites] = useState<Recipe[]>([]);
 
-    async function loadCookedRecipes() {
-        const data = await getCookedRecipes();
-        setCookedRecipes(data);
+    async function loadFavorites() {
+        const data = await getFavorites();
+        setFavorites(data);
     }
 
     async function handleRemove(recipeId: string) {
-        await removeFromCooked(recipeId);
-        await loadCookedRecipes();
-    }
-
-    async function handleMoveBack(recipe: Recipe) {
-        await moveBackToWishlist(recipe);
-        await loadCookedRecipes();
+        await removeFromFavorites(recipeId);
+        await loadFavorites();
     }
 
     useFocusEffect(
         useCallback(() => {
-            loadCookedRecipes();
+            loadFavorites();
         }, [])
     );
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Lieblingsrezepte</Text>
+
             <Text style={styles.subtitle}>
-                Alle Rezepte, die du bereits gekocht hast.
+                Deine favorisierten Rezepte.
             </Text>
 
-            {cookedRecipes.length === 0 ? (
+            {favorites.length === 0 ? (
                 <Text style={styles.emptyText}>
-                    Noch keine gekochten Rezepte.
+                    Noch keine Lieblingsrezepte gespeichert.
                 </Text>
             ) : (
                 <FlatList
-                    data={cookedRecipes}
+                    data={favorites}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <View style={styles.item}>
-                            <RecipeCard
-                                recipe={item}
-                                onPress={() => router.push(`/recipe/${item.id}`)}
-                            />
-
-                            <View style={styles.buttonGroup}>
-                                <PrimaryButton
-                                    title="Zurück zur Wunschliste"
-                                    onPress={() => handleMoveBack(item)}
-                                />
-
-                                <PrimaryButton
-                                    title="Entfernen"
-                                    onPress={() => handleRemove(item.id)}
-                                />
-                            </View>
-                        </View>
+                        <RecipeCard
+                            recipe={item}
+                            onPress={() => router.push(`/recipe/${item.id}`)}
+                            onRemovePress={() => handleRemove(item.id)}
+                            isFavorite={true}
+                        />
                     )}
                 />
             )}
@@ -92,13 +78,5 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: "#5E6C5B",
-    },
-    item: {
-        marginBottom: 24,
-    },
-
-    buttonGroup: {
-        marginTop: 10,
-        gap: 10,
     },
 });

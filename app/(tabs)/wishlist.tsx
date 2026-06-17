@@ -4,30 +4,46 @@ import { useFocusEffect, router } from "expo-router";
 
 import { Recipe } from "../../types/Recipe";
 import RecipeCard from "../../components/RecipeCard";
-import PrimaryButton from "../../components/PrimaryButton";
-import { getWishlist, markAsCooked, removeFromWishlist } from "../../services/storage";
+import {
+    getWishlist,
+    removeFromWishlist,
+    addToFavorites,
+    getFavorites,
+    removeFromFavorites
+} from "../../services/storage";
 
 export default function WishlistScreen() {
     const [wishlist, setWishlist] = useState<Recipe[]>([]);
+    const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
-    async function loadWishlist() {
-        const data = await getWishlist();
-        setWishlist(data);
+    async function loadData() {
+        const wishlistData = await getWishlist();
+        const favoritesData = await getFavorites();
+
+        setWishlist(wishlistData);
+        setFavoriteIds(favoritesData.map((item) => item.id));
     }
 
-    async function handleMarkAsCooked(recipe: Recipe) {
-        await markAsCooked(recipe);
-        await loadWishlist();
+    async function handleFavorite(recipe: Recipe) {
+        const isAlreadyFavorite = favoriteIds.includes(recipe.id);
+
+        if (isAlreadyFavorite) {
+            await removeFromFavorites(recipe.id);
+        } else {
+            await addToFavorites(recipe);
+        }
+
+        await loadData();
     }
 
     async function handleRemove(recipeId: string) {
         await removeFromWishlist(recipeId);
-        await loadWishlist();
+        await loadData();
     }
 
     useFocusEffect(
         useCallback(() => {
-            loadWishlist();
+            loadData();
         }, [])
     );
 
@@ -48,24 +64,13 @@ export default function WishlistScreen() {
                     data={wishlist}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <View style={styles.item}>
-                            <RecipeCard
-                                recipe={item}
-                                onPress={() =>
-                                    router.push(`/recipe/${item.id}`)
-                                }
-                            />
-                            <View style={styles.buttonGroup}>
-                                <PrimaryButton
-                                    title="Gekocht"
-                                    onPress={() => handleMarkAsCooked(item)}
-                                />
-                                <PrimaryButton
-                                    title="Entfernen"
-                                    onPress={() => handleRemove(item.id)}
-                                />
-                            </View>
-                        </View>
+                        <RecipeCard
+                            recipe={item}
+                            onPress={() => router.push(`/recipe/${item.id}`)}
+                            onFavoritePress={() => handleFavorite(item)}
+                            onRemovePress={() => handleRemove(item.id)}
+                            isFavorite={favoriteIds.includes(item.id)}
+                        />
                     )}
                 />
             )}
@@ -93,12 +98,5 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: "#5E6C5B",
-    },
-    item: {
-        marginBottom: 24,
-    },
-    buttonGroup: {
-        marginTop: 10,
-        gap: 10,
     },
 });

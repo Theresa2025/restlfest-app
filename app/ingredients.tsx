@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import { View, Text, TextInput, FlatList, StyleSheet, Pressable } from "react-native";
+import {
+    View,
+    Text,
+    TextInput,
+    FlatList,
+    StyleSheet,
+    Pressable,
+} from "react-native";
+
 import PrimaryButton from "../components/PrimaryButton";
 
 export default function IngredientsScreen() {
@@ -15,7 +23,8 @@ export default function IngredientsScreen() {
         ) {
             const scannedIngredients = params.detected
                 .split(",")
-                .map((item) => item.trim());
+                .map((item) => item.trim())
+                .filter((item) => item.length > 0);
 
             setIngredients(scannedIngredients);
         }
@@ -25,6 +34,11 @@ export default function IngredientsScreen() {
         const cleanedIngredient = ingredientInput.trim();
 
         if (cleanedIngredient.length === 0) {
+            return;
+        }
+
+        if (ingredients.includes(cleanedIngredient)) {
+            setIngredientInput("");
             return;
         }
 
@@ -52,36 +66,58 @@ export default function IngredientsScreen() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Zutaten bearbeiten</Text>
+
             <Text style={styles.subtitle}>
-                Gib ein, welche Lebensmittel du zuhause hast.
+                Prüfe die erkannten Lebensmittel und ergänze fehlende Zutaten.
             </Text>
 
-            <View style={styles.inputRow}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="z.B. Tomaten"
-                    value={ingredientInput}
-                    onChangeText={setIngredientInput}
-                />
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Neue Zutat hinzufügen</Text>
 
-                <Pressable style={styles.addButton} onPress={addIngredient}>
-                    <Text style={styles.addButtonText}>+</Text>
-                </Pressable>
+                <View style={styles.inputRow}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="z.B. Tomaten"
+                        value={ingredientInput}
+                        onChangeText={setIngredientInput}
+                        onSubmitEditing={addIngredient}
+                    />
+
+                    <Pressable style={styles.addButton} onPress={addIngredient}>
+                        <Text style={styles.addButtonText}>+</Text>
+                    </Pressable>
+                </View>
             </View>
 
-            <FlatList
-                data={ingredients}
-                keyExtractor={(item) => item}
-                renderItem={({ item }) => (
-                    <View style={styles.ingredientItem}>
-                        <Text style={styles.ingredientText}>{item}</Text>
+            <Text style={styles.sectionTitle}>
+                Erkannte Zutaten ({ingredients.length})
+            </Text>
 
-                        <Pressable onPress={() => removeIngredient(item)}>
-                            <Text style={styles.deleteText}>Entfernen</Text>
-                        </Pressable>
-                    </View>
-                )}
-            />
+            {ingredients.length === 0 ? (
+                <Text style={styles.emptyText}>
+                    Noch keine Zutaten vorhanden.
+                </Text>
+            ) : (
+                <FlatList
+                    data={ingredients}
+                    keyExtractor={(item) => item}
+                    contentContainerStyle={styles.listContent}
+                    renderItem={({ item }) => (
+                        <View style={styles.ingredientChip}>
+                            <Text style={styles.ingredientIcon}>🥕</Text>
+
+                            <Text style={styles.ingredientText}>{item}</Text>
+
+                            <Pressable
+                                style={styles.deleteButton}
+                                onPress={() => removeIngredient(item)}
+                            >
+                                <Text style={styles.deleteText}>×</Text>
+                            </Pressable>
+                        </View>
+                    )}
+                />
+            )}
 
             <View style={styles.buttonContainer}>
                 <PrimaryButton
@@ -99,29 +135,52 @@ const styles = StyleSheet.create({
         padding: 24,
         backgroundColor: "#F7F4EA",
     },
+
     title: {
         fontSize: 28,
         fontWeight: "bold",
         color: "#263A29",
     },
+
     subtitle: {
         fontSize: 16,
         color: "#5E6C5B",
         marginTop: 8,
         marginBottom: 24,
     },
+
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 20,
+        padding: 18,
+        marginBottom: 24,
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#263A29",
+        marginBottom: 12,
+    },
+
     inputRow: {
         flexDirection: "row",
         gap: 10,
-        marginBottom: 24,
     },
+
     input: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: "#F7F4EA",
         borderRadius: 14,
         padding: 14,
         fontSize: 16,
+        color: "#263A29",
     },
+
     addButton: {
         width: 52,
         height: 52,
@@ -130,28 +189,70 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+
     addButtonText: {
         color: "#fff",
         fontSize: 28,
         fontWeight: "bold",
     },
-    ingredientItem: {
-        backgroundColor: "#fff",
-        padding: 14,
-        borderRadius: 14,
-        marginBottom: 10,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
+
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#263A29",
+        marginBottom: 14,
     },
+
+    listContent: {
+        paddingBottom: 16,
+    },
+
+    ingredientChip: {
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+
+    ingredientIcon: {
+        fontSize: 22,
+        marginRight: 12,
+    },
+
     ingredientText: {
-        fontSize: 16,
+        flex: 1,
+        fontSize: 17,
+        fontWeight: "600",
         color: "#263A29",
     },
+
+    deleteButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "#FDECEC",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
     deleteText: {
         color: "#B00020",
+        fontSize: 22,
         fontWeight: "bold",
+        lineHeight: 24,
     },
+
+    emptyText: {
+        fontSize: 16,
+        color: "#5E6C5B",
+    },
+
     buttonContainer: {
         marginTop: 20,
     },

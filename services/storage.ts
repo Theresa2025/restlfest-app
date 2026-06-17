@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Recipe } from "../types/Recipe";
 
 const WISHLIST_KEY = "restlfest_wishlist";
-const COOKED_KEY = "restlfest_cooked";
+const FAVORITES_KEY = "restlfest_favorites";
 
 export async function getWishlist(): Promise<Recipe[]> {
     const data = await AsyncStorage.getItem(WISHLIST_KEY);
@@ -10,24 +10,22 @@ export async function getWishlist(): Promise<Recipe[]> {
 }
 
 export async function addToWishlist(recipe: Recipe): Promise<void> {
-    const currentWishlist = await getWishlist();
+    const wishlist = await getWishlist();
 
-    const alreadyExists = currentWishlist.some(
-        (item) => item.id === recipe.id
-    );
+    const alreadyExists = wishlist.some((item) => item.id === recipe.id);
 
     if (!alreadyExists) {
         await AsyncStorage.setItem(
             WISHLIST_KEY,
-            JSON.stringify([...currentWishlist, recipe])
+            JSON.stringify([...wishlist, recipe])
         );
     }
 }
 
 export async function removeFromWishlist(recipeId: string): Promise<void> {
-    const currentWishlist = await getWishlist();
+    const wishlist = await getWishlist();
 
-    const updatedWishlist = currentWishlist.filter(
+    const updatedWishlist = wishlist.filter(
         (item) => item.id !== recipeId
     );
 
@@ -37,42 +35,33 @@ export async function removeFromWishlist(recipeId: string): Promise<void> {
     );
 }
 
-export async function getCookedRecipes(): Promise<Recipe[]> {
-    const data = await AsyncStorage.getItem(COOKED_KEY);
+export async function getFavorites(): Promise<Recipe[]> {
+    const data = await AsyncStorage.getItem(FAVORITES_KEY);
     return data ? JSON.parse(data) : [];
 }
 
-export async function markAsCooked(recipe: Recipe): Promise<void> {
-    const cookedRecipes = await getCookedRecipes();
+export async function addToFavorites(recipe: Recipe): Promise<void> {
+    const favorites = await getFavorites();
 
-    const alreadyCooked = cookedRecipes.some(
-        (item) => item.id === recipe.id
-    );
+    const alreadyExists = favorites.some((item) => item.id === recipe.id);
 
-    if (!alreadyCooked) {
+    if (!alreadyExists) {
         await AsyncStorage.setItem(
-            COOKED_KEY,
-            JSON.stringify([...cookedRecipes, recipe])
+            FAVORITES_KEY,
+            JSON.stringify([...favorites, recipe])
         );
     }
-
-    await removeFromWishlist(recipe.id);
 }
 
-export async function removeFromCooked(recipeId: string): Promise<void> {
-    const cookedRecipes = await getCookedRecipes();
+export async function removeFromFavorites(recipeId: string): Promise<void> {
+    const favorites = await getFavorites();
 
-    const updatedCookedRecipes = cookedRecipes.filter(
+    const updatedFavorites = favorites.filter(
         (item) => item.id !== recipeId
     );
 
     await AsyncStorage.setItem(
-        COOKED_KEY,
-        JSON.stringify(updatedCookedRecipes)
+        FAVORITES_KEY,
+        JSON.stringify(updatedFavorites)
     );
-}
-
-export async function moveBackToWishlist(recipe: Recipe): Promise<void> {
-    await removeFromCooked(recipe.id);
-    await addToWishlist(recipe);
 }
