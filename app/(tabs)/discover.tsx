@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    Animated,
-    PanResponder,
-} from "react-native";
+import { View, Text, StyleSheet, Animated, PanResponder, ActivityIndicator, } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { mockRecipes } from "../../data/mockRecipes";
 import RecipeCard from "../../components/RecipeCard";
 import PrimaryButton from "../../components/PrimaryButton";
-import { addToWishlist } from "../../services/storage";
+import { addToWishlist, saveSelectedRecipe } from "../../services/storage";
+import { fetchRecipesByIngredient } from "../../services/recipeApi";
 import { Recipe } from "../../types/Recipe";
 
 export default function DiscoverScreen() {
     const params = useLocalSearchParams();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [apiRecipes, setApiRecipes] = useState<Recipe[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const position = useRef(new Animated.ValueXY()).current;
 
@@ -28,27 +25,53 @@ export default function DiscoverScreen() {
                 .filter((item) => item.length > 0)
             : [];
 
-    const filteredRecipes =
-        selectedIngredients.length === 0
-            ? mockRecipes
-            : mockRecipes.filter((recipe) =>
-                recipe.ingredients.some((ingredient) =>
-                    selectedIngredients.includes(
-                        ingredient.toLowerCase()
-                    )
-                )
-            );
-
-    const currentRecipe = filteredRecipes[currentIndex];
-
-    useEffect(() => {
-        setCurrentIndex(0);
-        resetPosition();
-    }, [params.ingredients]);
-
     function resetPosition() {
         position.setValue({ x: 0, y: 0 });
     }
+
+    useEffect(() => {
+        async function loadRecipesFromApi() {
+            setCurrentIndex(0);
+            resetPosition();
+
+            if (selectedIngredients.length === 0) {
+                setApiRecipes([]);
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const recipesFromApi = await fetchRecipesByIngredient(
+                    selectedIngredients[0]
+                );
+
+                setApiRecipes(recipesFromApi);
+            } catch (error) {
+                console.log("API Fehler:", error);
+                setApiRecipes([]);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadRecipesFromApi();
+    }, [params.ingredients]);
+
+    const filteredRecipes =
+        apiRecipes.length > 0
+            ? apiRecipes
+            : selectedIngredients.length === 0
+                ? mockRecipes
+                : mockRecipes.filter((recipe) =>
+                    recipe.ingredients.some((ingredient) =>
+                        selectedIngredients.includes(
+                            ingredient.toLowerCase()
+                        )
+                    )
+                );
+
+    const currentRecipe = filteredRecipes[currentIndex];
 
     function nextRecipe() {
         setCurrentIndex((index) => index + 1);
@@ -94,7 +117,7 @@ export default function DiscoverScreen() {
             },
 
             onPanResponderRelease: (_, gesture) => {
-                if (gesture.dx > 120 && currentRecipe) {
+                if (gesture.dx > 120) {
                     swipeRight();
                 } else if (gesture.dx < -120) {
                     swipeLeft();
@@ -132,6 +155,16 @@ export default function DiscoverScreen() {
             { rotate },
         ],
     };
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>Rezepte entdecken</Text>
+                <ActivityIndicator size="large" />
+                <Text style={styles.emptyText}>Rezepte werden geladen...</Text>
+            </View>
+        );
+    }
 
     if (!currentRecipe) {
         return (
@@ -178,9 +211,10 @@ export default function DiscoverScreen() {
 
                 <RecipeCard
                     recipe={currentRecipe}
-                    onPress={() =>
-                        router.push(`/recipe/${currentRecipe.id}`)
-                    }
+                    onPress={async () => {
+                        await saveSelectedRecipe(currentRecipe);
+                        router.push(`/recipe/${currentRecipe.id}`);
+                    }}
                 />
             </Animated.View>
 
@@ -215,6 +249,7 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         color: "#5E6C5B",
+        marginTop: 16,
         marginBottom: 24,
     },
 

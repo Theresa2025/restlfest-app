@@ -65,3 +65,17 @@ export async function removeFromFavorites(recipeId: string): Promise<void> {
         JSON.stringify(updatedFavorites)
     );
 }
+
+const SELECTED_RECIPE_KEY = "restlfest_selected_recipe";
+
+export async function saveSelectedRecipe(recipe: Recipe): Promise<void> {
+    await AsyncStorage.setItem(
+        SELECTED_RECIPE_KEY,
+        JSON.stringify(recipe)
+    );
+}
+
+export async function getSelectedRecipe(): Promise<Recipe | null> {
+    const data = await AsyncStorage.getItem(SELECTED_RECIPE_KEY);
+    return data ? JSON.parse(data) : null;
+}

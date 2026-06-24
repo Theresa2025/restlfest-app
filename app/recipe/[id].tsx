@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -20,6 +20,7 @@ import {
     addToFavorites,
     removeFromFavorites,
     getFavorites,
+    getSelectedRecipe,
 } from "../../services/storage";
 
 export default function RecipeDetailScreen() {
@@ -28,43 +29,87 @@ export default function RecipeDetailScreen() {
     const [activeTab, setActiveTab] =
         useState<"ingredients" | "steps" | "infos">("ingredients");
 
+    const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
-    const recipe = mockRecipes.find((item) => item.id === id);
+    useEffect(() => {
+        async function loadRecipe() {
+            const recipeId = String(id);
 
-    if (!recipe) {
-        return (
-            <View style={styles.container}>
-                <Text>Rezept nicht gefunden.</Text>
-            </View>
-        );
-    }
+            const mockRecipe = mockRecipes.find(
+                (item) => item.id === recipeId
+            );
 
-    const currentRecipe: Recipe = recipe;
+            if (mockRecipe) {
+                setCurrentRecipe(mockRecipe);
+                return;
+            }
 
-    async function loadStatus() {
+            const selectedRecipe = await getSelectedRecipe();
+
+            if (selectedRecipe && selectedRecipe.id === recipeId) {
+                setCurrentRecipe(selectedRecipe);
+                return;
+            }
+
+            const wishlist = await getWishlist();
+            const wishlistRecipe = wishlist.find(
+                (item) => item.id === recipeId
+            );
+
+            if (wishlistRecipe) {
+                setCurrentRecipe(wishlistRecipe);
+                return;
+            }
+
+            const favorites = await getFavorites();
+            const favoriteRecipe = favorites.find(
+                (item) => item.id === recipeId
+            );
+
+            if (favoriteRecipe) {
+                setCurrentRecipe(favoriteRecipe);
+            }
+        }
+
+        loadRecipe();
+    }, [id]);
+
+    async function loadStatus(recipe: Recipe) {
         const wishlist = await getWishlist();
         const favorites = await getFavorites();
 
         setIsInWishlist(
-            wishlist.some((item) => item.id === currentRecipe.id)
+            wishlist.some((item) => item.id === recipe.id)
         );
 
         setIsFavorite(
-            favorites.some((item) => item.id === currentRecipe.id)
+            favorites.some((item) => item.id === recipe.id)
         );
     }
 
     useFocusEffect(
         useCallback(() => {
-            loadStatus();
-        }, [currentRecipe.id])
+            if (currentRecipe) {
+                loadStatus(currentRecipe);
+            }
+        }, [currentRecipe])
     );
+
+    if (!currentRecipe) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.loadingText}>Rezept wird geladen...</Text>
+            </View>
+        );
+    }
+
+    const recipe = currentRecipe;
 
     async function handleWishlist() {
         if (isInWishlist) {
-            await removeFromWishlist(currentRecipe.id);
+            await removeFromWishlist(recipe.id);
             setIsInWishlist(false);
 
             Alert.alert(
@@ -72,7 +117,7 @@ export default function RecipeDetailScreen() {
                 "Rezept wurde aus der Wunschliste entfernt."
             );
         } else {
-            await addToWishlist(currentRecipe);
+            await addToWishlist(recipe);
             setIsInWishlist(true);
 
             Alert.alert(
@@ -84,10 +129,10 @@ export default function RecipeDetailScreen() {
 
     async function handleFavorite() {
         if (isFavorite) {
-            await removeFromFavorites(currentRecipe.id);
+            await removeFromFavorites(recipe.id);
             setIsFavorite(false);
         } else {
-            await addToFavorites(currentRecipe);
+            await addToFavorites(recipe);
             setIsFavorite(true);
         }
     }
@@ -95,7 +140,7 @@ export default function RecipeDetailScreen() {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>{currentRecipe.title}</Text>
+                <Text style={styles.title}>{recipe.title}</Text>
 
                 <Pressable onPress={handleFavorite}>
                     <Text
@@ -110,15 +155,13 @@ export default function RecipeDetailScreen() {
             </View>
 
             <View style={styles.metaRow}>
-                <Text style={styles.meta}>
-                    ⏱ {currentRecipe.duration} Min.
-                </Text>
+                <Text style={styles.meta}>⏱ {recipe.duration} Min.</Text>
                 <Text style={styles.meta}>👥 2 Portionen</Text>
                 <Text style={styles.meta}>▰ Einfach</Text>
             </View>
 
             <Image
-                source={{ uri: currentRecipe.imageUrl }}
+                source={{ uri: recipe.imageUrl }}
                 style={styles.image}
             />
 
@@ -145,7 +188,8 @@ export default function RecipeDetailScreen() {
                     <Text
                         style={[
                             styles.tabText,
-                            activeTab === "steps" && styles.activeTabText,
+                            activeTab === "steps" &&
+                            styles.activeTabText,
                         ]}
                     >
                         Schritte
@@ -159,7 +203,8 @@ export default function RecipeDetailScreen() {
                     <Text
                         style={[
                             styles.tabText,
-                            activeTab === "infos" && styles.activeTabText,
+                            activeTab === "infos" &&
+                            styles.activeTabText,
                         ]}
                     >
                         Infos
@@ -172,17 +217,15 @@ export default function RecipeDetailScreen() {
                     <>
                         <Text style={styles.sectionTitle}>Zutaten</Text>
 
-                        {currentRecipe.ingredients.map((ingredient) => (
+                        {recipe.ingredients.map((ingredient) => (
                             <View
                                 key={ingredient}
                                 style={styles.ingredientRow}
                             >
                                 <Text style={styles.ingredientIcon}>🍅</Text>
-
                                 <Text style={styles.ingredientName}>
                                     {ingredient}
                                 </Text>
-
                                 <Text style={styles.ingredientAmount}>
                                     nach Bedarf
                                 </Text>
@@ -195,12 +238,11 @@ export default function RecipeDetailScreen() {
                     <>
                         <Text style={styles.sectionTitle}>Zubereitung</Text>
 
-                        {currentRecipe.instructions.map((step, index) => (
+                        {recipe.instructions.map((step, index) => (
                             <View key={index} style={styles.stepCard}>
                                 <Text style={styles.stepNumber}>
                                     {index + 1}
                                 </Text>
-
                                 <Text style={styles.stepText}>{step}</Text>
                             </View>
                         ))}
@@ -237,6 +279,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F7F4EA",
+    },
+    loadingText: {
+        padding: 24,
+        fontSize: 16,
+        color: "#5E6C5B",
     },
     header: {
         paddingHorizontal: 24,
