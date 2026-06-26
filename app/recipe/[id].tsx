@@ -1,27 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    ScrollView,
-    Alert,
-    Pressable,
-} from "react-native";
+import { View, Text, StyleSheet, Image, ScrollView, Alert, Pressable, } from "react-native";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { Recipe } from "../../types/Recipe";
 import { mockRecipes } from "../../data/mockRecipes";
 import PrimaryButton from "../../components/PrimaryButton";
-import {
-    addToWishlist,
-    removeFromWishlist,
-    getWishlist,
-    addToFavorites,
-    removeFromFavorites,
-    getFavorites,
-    getSelectedRecipe,
-} from "../../services/storage";
+import { addToWishlist, removeFromWishlist, getWishlist, addToFavorites, removeFromFavorites,
+    getFavorites, getSelectedRecipe } from "../../services/storage";
+import { fetchRecipeDetailsById } from "../../services/recipeApi";
 
 export default function RecipeDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -43,6 +29,13 @@ export default function RecipeDetailScreen() {
 
             if (mockRecipe) {
                 setCurrentRecipe(mockRecipe);
+                return;
+            }
+
+            const apiRecipe = await fetchRecipeDetailsById(recipeId);
+
+            if (apiRecipe) {
+                setCurrentRecipe(apiRecipe);
                 return;
             }
 
@@ -217,17 +210,12 @@ export default function RecipeDetailScreen() {
                     <>
                         <Text style={styles.sectionTitle}>Zutaten</Text>
 
-                        {recipe.ingredients.map((ingredient) => (
-                            <View
-                                key={ingredient}
-                                style={styles.ingredientRow}
-                            >
+                        {recipe.ingredients.map((ingredient, index) => (
+                            <View key={`${ingredient}-${index}`} style={styles.ingredientRow}>
                                 <Text style={styles.ingredientIcon}>🍅</Text>
+
                                 <Text style={styles.ingredientName}>
                                     {ingredient}
-                                </Text>
-                                <Text style={styles.ingredientAmount}>
-                                    nach Bedarf
                                 </Text>
                             </View>
                         ))}
@@ -239,7 +227,7 @@ export default function RecipeDetailScreen() {
                         <Text style={styles.sectionTitle}>Zubereitung</Text>
 
                         {recipe.instructions.map((step, index) => (
-                            <View key={index} style={styles.stepCard}>
+                            <View key={`${step}-${index}`} style={styles.stepCard}>
                                 <Text style={styles.stepNumber}>
                                     {index + 1}
                                 </Text>
