@@ -49,6 +49,9 @@ restlfest-app/
 │   ├── ingredients.tsx          # Zutaten bearbeiten
 │   └── scan.tsx                 # Kamera / Scan
 │
+├── assets/                 # Statische Ressourcen
+│   └── images/             # Bilder der App (z. B. Startseitenbild)
+│
 ├── components/
 │   ├── PrimaryButton.tsx
 │   └── RecipeCard.tsx
