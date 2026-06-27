@@ -14,6 +14,7 @@ export default function DiscoverScreen() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [apiRecipes, setApiRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(false);
+    const [savedCount, setSavedCount] = useState(0);
 
     const position = useRef(new Animated.ValueXY()).current;
 
@@ -32,6 +33,7 @@ export default function DiscoverScreen() {
     useEffect(() => {
         async function loadRecipesFromApi() {
             setCurrentIndex(0);
+            setSavedCount(0);
             resetPosition();
 
             if (selectedIngredients.length === 0) {
@@ -80,6 +82,7 @@ export default function DiscoverScreen() {
 
     async function saveRecipe(recipe: Recipe) {
         await addToWishlist(recipe);
+        setSavedCount((count) => count + 1);
         nextRecipe();
     }
 
@@ -158,27 +161,67 @@ export default function DiscoverScreen() {
 
     if (loading) {
         return (
-            <View style={styles.container}>
+            <View style={[styles.container, styles.centerContent]}>
                 <Text style={styles.title}>Rezepte entdecken</Text>
-                <ActivityIndicator size="large" />
-                <Text style={styles.emptyText}>Rezepte werden geladen...</Text>
+
+                <ActivityIndicator
+                    size="large"
+                    color="#3A7D44"
+                    style={styles.loader}
+                />
+
+                <Text style={styles.emptyText}>
+                    Passende Rezepte werden gesucht...
+                </Text>
             </View>
         );
     }
 
     if (!currentRecipe) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.title}>Rezepte entdecken</Text>
+            <View style={[styles.container, styles.centerContent]}>
+                <Text style={styles.finishIcon}>🎉</Text>
+
+                <Text style={styles.title}>Fertig entdeckt</Text>
 
                 <Text style={styles.emptyText}>
-                    Keine weiteren Rezepte vorhanden.
+                    Du hast alle Rezeptvorschläge angesehen.
                 </Text>
 
-                <PrimaryButton
-                    title="Zur Wunschliste"
-                    onPress={() => router.push("/(tabs)/wishlist")}
-                />
+                {savedCount > 0 ? (
+                    <>
+                        <Text style={styles.emptyText}>
+                            Du hast {savedCount} Rezept(e) gespeichert.
+                        </Text>
+
+                        <View style={styles.finishButton}>
+                            <PrimaryButton
+                                title="Zur Wunschliste"
+                                onPress={() => router.push("/(tabs)/wishlist")}
+                            />
+                        </View>
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.emptyText}>
+                            Es wurde kein Rezept gespeichert.
+                        </Text>
+
+                        <View style={styles.finishButton}>
+                            <PrimaryButton
+                                title="Zutaten bearbeiten"
+                                onPress={() =>
+                                    router.push({
+                                        pathname: "/ingredients",
+                                        params: {
+                                            detected: selectedIngredients.join(","),
+                                        },
+                                    })
+                                }
+                            />
+                        </View>
+                    </>
+                )}
             </View>
         );
     }
@@ -188,10 +231,26 @@ export default function DiscoverScreen() {
             <Text style={styles.title}>Rezepte entdecken</Text>
 
             <Text style={styles.subtitle}>
-                {selectedIngredients.length === 0
-                    ? "Swipe rechts zum Speichern, links zum Verwerfen."
-                    : `Passend zu: ${selectedIngredients.join(", ")}`}
+                Swipe nach rechts, wenn dir das Rezept gefällt.
+                {"\n"}
+                Swipe nach links, wenn nicht.
             </Text>
+
+            <Text style={styles.counterText}>
+                Rezept {currentIndex + 1} von {filteredRecipes.length}
+            </Text>
+
+            <View style={styles.progressContainer}>
+                {filteredRecipes.map((recipe, index) => (
+                    <View
+                        key={recipe.id}
+                        style={[
+                            styles.progressBar,
+                            index <= currentIndex && styles.progressBarActive,
+                        ]}
+                    />
+                ))}
+            </View>
 
             <Animated.View
                 style={animatedCardStyle}
@@ -240,17 +299,21 @@ const styles = StyleSheet.create({
     },
 
     subtitle: {
-        fontSize: 16,
+        fontSize: 14,
         color: "#5E6C5B",
         marginTop: 8,
-        marginBottom: 20,
+        marginBottom: 8,
+        textAlign: "center",
+        lineHeight: 20,
     },
 
     emptyText: {
         fontSize: 16,
         color: "#5E6C5B",
-        marginTop: 16,
-        marginBottom: 24,
+        marginTop: 12,
+        marginBottom: 12,
+        textAlign: "center",
+        lineHeight: 23,
     },
 
     buttonRow: {
@@ -286,5 +349,49 @@ const styles = StyleSheet.create({
         padding: 8,
         borderRadius: 8,
         transform: [{ rotate: "12deg" }],
+    },
+
+    counterText: {
+        fontSize: 14,
+        color: "#5E6C5B",
+        textAlign: "center",
+        marginBottom: 10,
+    },
+
+    progressContainer: {
+        flexDirection: "row",
+        gap: 6,
+        marginBottom: 20,
+    },
+
+    progressBar: {
+        flex: 1,
+        height: 5,
+        borderRadius: 8,
+        backgroundColor: "#E0DED6",
+    },
+
+    progressBarActive: {
+        backgroundColor: "#3A7D44",
+    },
+
+    centerContent: {
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    loader: {
+        marginTop: 24,
+        marginBottom: 12,
+    },
+
+    finishIcon: {
+        fontSize: 54,
+        marginBottom: 16,
+    },
+
+    finishButton: {
+        marginTop: 12,
+        width: "100%",
     },
 });

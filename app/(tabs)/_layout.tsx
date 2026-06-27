@@ -3,7 +3,28 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function TabsLayout() {
     return (
-        <Tabs>
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+
+                tabBarActiveTintColor: "#3A7D44",
+                tabBarInactiveTintColor: "#9CA39A",
+
+                tabBarStyle: {
+                    backgroundColor: "#FFFFFF",
+                    height: 68,
+                    paddingTop: 6,
+                    paddingBottom: 8,
+                    borderTopColor: "#E5E1D8",
+                    borderTopWidth: 1,
+                },
+
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    fontWeight: "600",
+                },
+            }}
+        >
             <Tabs.Screen
                 name="index"
                 options={{
@@ -35,7 +56,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="wishlist"
                 options={{
-                    title: "Wishlist",
+                    title: "Wunschliste",
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons
                             name="bookmark-outline"
