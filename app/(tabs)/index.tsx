@@ -3,8 +3,10 @@ import { router } from "expo-router";
 import PrimaryButton from "../../components/PrimaryButton";
 import { Image } from "react-native";
 
+// Lokales Bild aus dem assets-Ordner laden
 const heroImage = require("../../assets/images/home-hero.png");
 
+// Home Screen der App
 export default function HomeScreen() {
     return (
         <View style={styles.container}>
@@ -12,7 +14,7 @@ export default function HomeScreen() {
             <Text style={styles.title}>RestlFest</Text>
 
             <Text style={styles.subtitle}>
-                Erkenne deine Lebensmittel{"\n"}
+                Erfasse deine Lebensmittel{"\n"}
                 Entdecke passende Rezepte.
             </Text>
 
@@ -22,6 +24,7 @@ export default function HomeScreen() {
                 resizeMode="cover"
             />
 
+            {/* Bereich mit den Navigationsbuttons */}
             <View style={styles.buttonGroup}>
                 <PrimaryButton
                     title="Lebensmittel scannen"

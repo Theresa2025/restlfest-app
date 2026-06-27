@@ -1,22 +1,30 @@
 import { Text, Pressable, StyleSheet } from "react-native";
 
+// Definiert die Eigenschaften (Props), die der Button von außen erhält.
 type PrimaryButtonProps = {
-    title: string;
-    onPress: () => void;
+    title: string; // Text, der auf dem Button angezeigt wird.
+    onPress: () => void; // Funktion, die beim Klicken auf den Button ausgeführt wird.
 };
 
+// Wiederverwendbare Button-Komponente.
+// Sie kann auf allen Screens verwendet werden und erhält Titel und Klickfunktion über Props.
 export default function PrimaryButton({
                                           title,
                                           onPress,
                                       }: PrimaryButtonProps) {
     return (
         <Pressable
+            // Führt die übergebene Funktion aus, sobald der Button gedrückt wird.
             onPress={onPress}
+
+            // Während der Button gedrückt wird, wird zusätzlich der Style
+            // "buttonPressed" angewendet.
             style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
             ]}
         >
+            {/* Gibt den übergebenen Button-Text aus */}
             <Text style={styles.text}>{title}</Text>
         </Pressable>
     );

@@ -1,14 +1,16 @@
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
 import { Recipe } from "../types/Recipe";
 
+// Props definieren, die die RecipeCard von der übergeordneten Komponente erhält.
 type RecipeCardProps = {
-    recipe: Recipe;
-    onPress: () => void;
-    onFavoritePress?: () => void;
-    onRemovePress?: () => void;
-    isFavorite?: boolean;
+    recipe: Recipe; // Das anzuzeigende Rezept
+    onPress: () => void; // Wird ausgeführt, wenn die komplette Karte angeklickt wird
+    onFavoritePress?: () => void; // Optional: Rezept als Favorit markieren
+    onRemovePress?: () => void;  // Optional: Rezept entfernen
+    isFavorite?: boolean; // Gibt an, ob das Rezept bereits als Favorit gespeichert wurde
 };
 
+// Wiederverwendbare Komponente zur Darstellung eines Rezeptes
 export default function RecipeCard({
                                        recipe,
                                        onPress,
@@ -17,9 +19,12 @@ export default function RecipeCard({
                                        isFavorite = false,
                                    }: RecipeCardProps) {
     return (
+        // Pressable macht die komplette Rezeptkarte anklickbar
         <Pressable style={styles.card} onPress={onPress}>
+            {/* Rezeptbild wird über die Bild-URL geladen */}
             <Image source={{ uri: recipe.imageUrl }} style={styles.image} />
 
+            {/* Informationen zum Rezept */}
             <View style={styles.content}>
                 <Text style={styles.title}>{recipe.title}</Text>
 
@@ -27,17 +32,25 @@ export default function RecipeCard({
                     ⏱ {recipe.duration} Minuten
                 </Text>
 
+                {/* Zutaten werden als kommaseparierte Liste dargestellt.
+                    numberOfLines verhindert, dass der Text zu viele Zeilen belegt. */}
                 <Text style={styles.ingredients} numberOfLines={1}>
                     {recipe.ingredients.join(", ")}
                 </Text>
             </View>
 
+            {/* Bereich für optionale Aktionen */}
             <View style={styles.actions}>
+
+                {/* Herzsymbol wird nur angezeigt,
+                    wenn eine onFavoritePress-Funktion übergeben wurde */}
                 {onFavoritePress && (
                     <Pressable onPress={onFavoritePress}>
                         <Text
                             style={[
                                 styles.icon,
+
+                                // Ist das Rezept Favorit, wird das Herz rot eingefärbt
                                 isFavorite && styles.favoriteIcon,
                             ]}
                         >
@@ -46,6 +59,8 @@ export default function RecipeCard({
                     </Pressable>
                 )}
 
+                {/* Papierkorb wird nur angezeigt,
+                    wenn eine Löschfunktion vorhanden ist */}
                 {onRemovePress && (
                     <Pressable onPress={onRemovePress}>
                         <Text style={styles.trashIcon}>🗑</Text>

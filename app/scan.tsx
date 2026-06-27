@@ -2,17 +2,27 @@ import { useRef } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
-
 import PrimaryButton from "../components/PrimaryButton";
 
 export default function ScanScreen() {
+
+    // Referenz auf die Kamera, damit später Funktionen wie takePictureAsync()
+    // direkt aufgerufen werden können.
     const cameraRef = useRef<CameraView>(null);
+
+    // Hook von Expo Camera:
+    // permission enthält den aktuellen Berechtigungsstatus.
+    // requestPermission() öffnet den Dialog zur Kamerafreigabe.
     const [permission, requestPermission] = useCameraPermissions();
 
+    // Solange der Berechtigungsstatus noch geladen wird,
+    // wird lediglich ein leerer Container angezeigt.
     if (!permission) {
         return <View style={styles.container} />;
     }
 
+    // Falls die Kamera noch nicht freigegeben wurde,
+    // wird eine Information mit einem Button angezeigt.
     if (!permission.granted) {
         return (
             <View style={styles.container}>
@@ -30,11 +40,18 @@ export default function ScanScreen() {
         );
     }
 
+    // Wird beim Klick auf "Foto aufnehmen" ausgeführt.
     async function takePicture() {
+
+        // Foto wird mit der Expo Camera aufgenommen.
         const photo = await cameraRef.current?.takePictureAsync();
 
+        // Ausgabe der Bild-URI in der Konsole (nur zu Testzwecken).
         console.log("Foto aufgenommen:", photo?.uri);
 
+        // Da aktuell keine Bilderkennung eingebunden ist,
+        // werden zufällige Zutaten simuliert.
+        // Anschließend Navigation zum Ingredients-Screen.
         router.push({
             pathname: "/ingredients",
             params: {
@@ -43,6 +60,8 @@ export default function ScanScreen() {
         });
     }
 
+    // Simuliert eine Bilderkennung.
+    // Bei einer echten Vision-API würden hier erkannte Zutaten zurückgegeben werden.
     function getRandomDetectedIngredients() {
         const scanResults = [
             "Tomaten,Mozzarella,Nudeln",
@@ -55,6 +74,7 @@ export default function ScanScreen() {
             "Mais,Bohnen,Reis",
         ];
 
+        // Zufälligen Datensatz auswählen.
         const randomIndex = Math.floor(
             Math.random() * scanResults.length
         );
@@ -62,6 +82,7 @@ export default function ScanScreen() {
         return scanResults[randomIndex];
     }
 
+    // Hauptansicht des Screens.
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Lebensmittel scannen</Text>

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, ScrollView, Alert, Pressable, } from "react-native";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-
 import { Recipe } from "../../types/Recipe";
 import { mockRecipes } from "../../data/mockRecipes";
 import PrimaryButton from "../../components/PrimaryButton";
@@ -10,19 +9,27 @@ import { addToWishlist, removeFromWishlist, getWishlist, addToFavorites, removeF
 import { fetchRecipeDetailsById } from "../../services/recipeApi";
 
 export default function RecipeDetailScreen() {
+    // ID aus der Route lesen, z.B. /recipe/12345
     const { id } = useLocalSearchParams();
 
+    // Aktiver Tab: Zutaten, Schritte oder Infos
     const [activeTab, setActiveTab] =
         useState<"ingredients" | "steps" | "infos">("ingredients");
 
+    // Aktuell angezeigtes Rezept.
+    // Am Anfang null, weil es zuerst geladen werden muss.
     const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
+
+    // Status für Wunschliste und Favoriten.
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
 
+    // Lädt das passende Rezept anhand der ID.
     useEffect(() => {
         async function loadRecipe() {
             const recipeId = String(id);
 
+            // 1. Zuerst in lokalen Mock-Rezepten suchen.
             const mockRecipe = mockRecipes.find(
                 (item) => item.id === recipeId
             );
@@ -32,6 +39,8 @@ export default function RecipeDetailScreen() {
                 return;
             }
 
+            // 2. Falls es kein Mock-Rezept ist:
+            // Detaildaten von der externen Rezept-API laden.
             const apiRecipe = await fetchRecipeDetailsById(recipeId);
 
             if (apiRecipe) {
@@ -39,6 +48,8 @@ export default function RecipeDetailScreen() {
                 return;
             }
 
+            // 3. Falls das Rezept vorher im Discover-Screen ausgewählt wurde,
+            // wird es aus dem lokalen Zwischenspeicher geladen.
             const selectedRecipe = await getSelectedRecipe();
 
             if (selectedRecipe && selectedRecipe.id === recipeId) {
@@ -46,6 +57,7 @@ export default function RecipeDetailScreen() {
                 return;
             }
 
+            // 4. Falls das Rezept in der Wunschliste gespeichert ist.
             const wishlist = await getWishlist();
             const wishlistRecipe = wishlist.find(
                 (item) => item.id === recipeId
@@ -56,6 +68,7 @@ export default function RecipeDetailScreen() {
                 return;
             }
 
+            // 5. Falls das Rezept in den Favoriten gespeichert ist.
             const favorites = await getFavorites();
             const favoriteRecipe = favorites.find(
                 (item) => item.id === recipeId
@@ -69,6 +82,7 @@ export default function RecipeDetailScreen() {
         loadRecipe();
     }, [id]);
 
+    // Prüft, ob das aktuelle Rezept bereits in Wunschliste oder Favoriten liegt.
     async function loadStatus(recipe: Recipe) {
         const wishlist = await getWishlist();
         const favorites = await getFavorites();
@@ -82,6 +96,8 @@ export default function RecipeDetailScreen() {
         );
     }
 
+    // Wird jedes Mal ausgeführt, wenn man auf diese Detailseite zurückkommt.
+    // So bleibt der Status von Herz und Wunschliste aktuell.
     useFocusEffect(
         useCallback(() => {
             if (currentRecipe) {
@@ -90,6 +106,7 @@ export default function RecipeDetailScreen() {
         }, [currentRecipe])
     );
 
+    // Solange kein Rezept geladen wurde, wird ein Ladehinweis angezeigt.
     if (!currentRecipe) {
         return (
             <View style={styles.container}>
@@ -98,8 +115,10 @@ export default function RecipeDetailScreen() {
         );
     }
 
+    // Ab hier weiß TypeScript: recipe ist sicher nicht null.
     const recipe = currentRecipe;
 
+    // Fügt ein Rezept zur Wunschliste hinzu oder entfernt es wieder.
     async function handleWishlist() {
         if (isInWishlist) {
             await removeFromWishlist(recipe.id);
@@ -120,6 +139,7 @@ export default function RecipeDetailScreen() {
         }
     }
 
+    // Fügt ein Rezept zu Favoriten hinzu oder entfernt es wieder.
     async function handleFavorite() {
         if (isFavorite) {
             await removeFromFavorites(recipe.id);

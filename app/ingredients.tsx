@@ -1,51 +1,60 @@
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import {
-    View,
-    Text,
-    TextInput,
-    FlatList,
-    StyleSheet,
-    Pressable,
-} from "react-native";
-
+import { View, Text, TextInput, FlatList, StyleSheet, Pressable } from "react-native";
 import PrimaryButton from "../components/PrimaryButton";
 
 export default function IngredientsScreen() {
+    // Holt Parameter aus der Navigation.
+    // Vom Scan Screen wird z.B. "detected" mitgegeben.
     const params = useLocalSearchParams();
+
+    // State für den aktuellen Text im Eingabefeld.
     const [ingredientInput, setIngredientInput] = useState("");
+
+    // State für die gesamte Zutatenliste.
     const [ingredients, setIngredients] = useState<string[]>([]);
 
+    // Wird ausgeführt, wenn vom Scan Screen erkannte Zutaten übergeben werden.
+    // Beispiel: "Tomaten,Mozzarella,Nudeln"
     useEffect(() => {
         if (
             typeof params.detected === "string" &&
             params.detected.length > 0
         ) {
+            // String wird bei Kommas getrennt und zu einem Array umgewandelt.
             const scannedIngredients = params.detected
                 .split(",")
                 .map((item) => item.trim())
                 .filter((item) => item.length > 0);
 
+            // Erkannte Zutaten werden in den State gespeichert.
             setIngredients(scannedIngredients);
         }
     }, [params.detected]);
 
+    // Fügt eine neue manuell eingegebene Zutat hinzu.
     function addIngredient() {
         const cleanedIngredient = ingredientInput.trim();
 
+        // Leere Eingaben werden ignoriert.
         if (cleanedIngredient.length === 0) {
             return;
         }
 
+        // Doppelte Zutaten werden verhindert.
         if (ingredients.includes(cleanedIngredient)) {
             setIngredientInput("");
             return;
         }
 
+        // Neue Zutat wird ans bestehende Array angehängt.
         setIngredients([...ingredients, cleanedIngredient]);
+
+        // Eingabefeld wird danach geleert.
         setIngredientInput("");
     }
 
+    // Entfernt eine Zutat aus der Liste.
     function removeIngredient(ingredientToRemove: string) {
         setIngredients(
             ingredients.filter(
@@ -54,6 +63,8 @@ export default function IngredientsScreen() {
         );
     }
 
+    // Navigiert zum Discover Screen.
+    // Die Zutaten werden als kommaseparierter String übergeben.
     function searchRecipes() {
         router.push({
             pathname: "/(tabs)/discover",
@@ -71,6 +82,7 @@ export default function IngredientsScreen() {
                 Prüfe die erkannten Lebensmittel und ergänze fehlende Zutaten.
             </Text>
 
+            {/* Karte für manuelle Zutateneingabe */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Neue Zutat hinzufügen</Text>
 
@@ -93,6 +105,8 @@ export default function IngredientsScreen() {
                 Erkannte Zutaten ({ingredients.length})
             </Text>
 
+            {/* Wenn keine Zutaten vorhanden sind, wird ein Hinweis angezeigt.
+                Sonst wird die Zutatenliste gerendert. */}
             {ingredients.length === 0 ? (
                 <Text style={styles.emptyText}>
                     Noch keine Zutaten vorhanden.

@@ -1,29 +1,35 @@
 import { useCallback, useState } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useFocusEffect, router } from "expo-router";
-
 import { Recipe } from "../../types/Recipe";
 import RecipeCard from "../../components/RecipeCard";
-import {
-    getWishlist,
-    removeFromWishlist,
-    addToFavorites,
-    getFavorites,
-    removeFromFavorites
-} from "../../services/storage";
+import { getWishlist, removeFromWishlist, addToFavorites, getFavorites,
+    removeFromFavorites } from "../../services/storage";
 
 export default function WishlistScreen() {
+
+    // State für alle gespeicherten Rezepte der Wunschliste
     const [wishlist, setWishlist] = useState<Recipe[]>([]);
+
+    // Speichert nur die IDs der Lieblingsrezepte
+    // Dadurch kann schnell überprüft werden,
+    // ob ein Rezept bereits als Favorit markiert wurde.
     const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
+    // Lädt Wunschliste und Favoriten aus dem AsyncStorage
     async function loadData() {
         const wishlistData = await getWishlist();
         const favoritesData = await getFavorites();
 
+        // Aktualisiert den State
         setWishlist(wishlistData);
+
+        // Es werden nur die IDs gespeichert,
+        // damit die Abfrage einfacher und schneller ist.
         setFavoriteIds(favoritesData.map((item) => item.id));
     }
 
+    // Rezept zu den Favoriten hinzufügen oder wieder entfernen
     async function handleFavorite(recipe: Recipe) {
         const isAlreadyFavorite = favoriteIds.includes(recipe.id);
 
@@ -33,14 +39,20 @@ export default function WishlistScreen() {
             await addToFavorites(recipe);
         }
 
+        // Nach jeder Änderung die Daten neu laden
         await loadData();
     }
 
+    // Rezept aus der Wunschliste löschen
     async function handleRemove(recipeId: string) {
         await removeFromWishlist(recipeId);
         await loadData();
     }
 
+    // useFocusEffect wird jedes Mal ausgeführt,
+    // wenn der Screen wieder geöffnet wird.
+    // Dadurch sind Wunschliste und Favoriten
+    // immer auf dem aktuellen Stand.
     useFocusEffect(
         useCallback(() => {
             loadData();
@@ -66,9 +78,17 @@ export default function WishlistScreen() {
                     renderItem={({ item }) => (
                         <RecipeCard
                             recipe={item}
+
+                            // Öffnet die Detailansicht
                             onPress={() => router.push(`/recipe/${item.id}`)}
+
+                            // Favoriten umschalten
                             onFavoritePress={() => handleFavorite(item)}
+
+                            // Rezept aus Wunschliste entfernen
                             onRemovePress={() => handleRemove(item.id)}
+
+                            // Herz rot anzeigen, wenn Favorit
                             isFavorite={favoriteIds.includes(item.id)}
                         />
                     )}

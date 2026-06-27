@@ -1,10 +1,14 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+// Layout für die untere Tab-Bar der App
 export default function TabsLayout() {
     return (
         <Tabs
             screenOptions={{
+
+                // Blendet den Standard-Header aus,
+                // da jeder Screen seinen eigenen Aufbau besitzt.
                 headerShown: false,
 
                 tabBarActiveTintColor: "#3A7D44",
@@ -26,6 +30,7 @@ export default function TabsLayout() {
             }}
         >
             <Tabs.Screen
+                // Verknüpft den Tab mit app/(tabs)/index.tsx
                 name="index"
                 options={{
                     title: "Home",
@@ -40,6 +45,7 @@ export default function TabsLayout() {
             />
 
             <Tabs.Screen
+                // Verknüpft den Tab mit app/(tabs)/discover.tsx
                 name="discover"
                 options={{
                     title: "Entdecken",
@@ -54,6 +60,7 @@ export default function TabsLayout() {
             />
 
             <Tabs.Screen
+                // Verknüpft den Tab mit app/(tabs)/wishlist.tsx
                 name="wishlist"
                 options={{
                     title: "Wunschliste",
@@ -68,6 +75,7 @@ export default function TabsLayout() {
             />
 
             <Tabs.Screen
+                // Verknüpft den Tab mit app/(tabs)/favorites.tsx
                 name="favorites"
                 options={{
                     title: "Favoriten",
