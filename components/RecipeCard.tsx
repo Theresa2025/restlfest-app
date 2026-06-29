@@ -54,7 +54,7 @@ export default function RecipeCard({
                                 isFavorite && styles.favoriteIcon,
                             ]}
                         >
-                            ♥
+                            {isFavorite ? "♥" : "♡"}
                         </Text>
                     </Pressable>
                 )}
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     image: {
-        width: 110,
-        height: 110,
+        width: 150,
+        height: 250,
     },
     content: {
         flex: 1,
